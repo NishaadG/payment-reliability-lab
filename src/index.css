@@ -1,0 +1,80 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --color-canvas: #f4f4f1;
+  --color-panel: #ffffff;
+  --color-ink: #16181d;
+  --color-muted: #5b616d;
+  --color-faint: #8d929c;
+  --color-line: #e3e3dd;
+  --color-line-strong: #cfcfc7;
+
+  --color-good: #17744a;
+  --color-good-bg: #eaf4ee;
+  --color-bad: #b4302a;
+  --color-bad-bg: #fbeeec;
+  --color-warn: #96610a;
+  --color-warn-bg: #f9f1e0;
+
+  --color-req: #2f4b7c;
+  --color-res: #1b7f79;
+  --color-ctl: #7a5a12;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+.halo {
+  paint-order: stroke;
+  stroke: var(--color-panel);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
