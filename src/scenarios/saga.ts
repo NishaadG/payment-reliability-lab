@@ -23,6 +23,7 @@ export const saga: ScenarioDef = {
   id: 'saga',
   tab: 'Saga',
   title: 'Compensating transactions instead of locks',
+  headline: 'If one step fails, undo the steps before it.',
   defaults: { fail: 'ship' },
   options: [
     {
@@ -256,6 +257,19 @@ export const saga: ScenarioDef = {
     return {
       sim,
       view: 'sequence',
+      layout: {
+        nodes: {
+          [ORCH]: { x: 500, y: 100, icon: 'hub', big: 'phase' },
+          [STOCK]: { x: 175, y: 460, icon: 'box', big: 'stock' },
+          [BANK]: { x: 500, y: 460, icon: 'card', big: 'balance' },
+          [SHIP]: { x: 825, y: 460, icon: 'truck', big: 'shipment' },
+        },
+        links: [
+          [ORCH, STOCK],
+          [ORCH, BANK],
+          [ORCH, SHIP],
+        ],
+      },
       canCutNetwork: true,
       startLabel: `Pay ${inr(AMOUNT)}`,
       started: () => began,

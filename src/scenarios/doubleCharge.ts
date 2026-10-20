@@ -15,6 +15,7 @@ export const doubleCharge: ScenarioDef = {
   id: 'double-charge',
   tab: 'Double charge',
   title: 'Network drop after the bank has debited',
+  headline: 'The bank took the money. The reply never arrived.',
   defaults: { idempotency: false, loseReply: true },
   options: [
     {
@@ -160,6 +161,17 @@ export const doubleCharge: ScenarioDef = {
     return {
       sim,
       view: 'sequence',
+      layout: {
+        nodes: {
+          [CLIENT]: { x: -110, y: 280, icon: 'server', hidden: true },
+          [GATEWAY]: { x: 380, y: 280, icon: 'gate', big: 'forwarded' },
+          [BANK]: { x: 810, y: 280, icon: 'bank', big: 'balance' },
+        },
+        links: [
+          [CLIENT, GATEWAY],
+          [GATEWAY, BANK],
+        ],
+      },
       canCutNetwork: true,
       startLabel: `Pay ${inr(AMOUNT)}`,
       started: () => status !== 'idle',

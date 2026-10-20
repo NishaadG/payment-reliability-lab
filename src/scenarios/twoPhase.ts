@@ -32,7 +32,8 @@ export const twoPhase: ScenarioDef = {
   id: 'two-phase',
   tab: 'Two-phase commit',
   title: 'Atomic payment across three services',
-  defaults: { stock: 'in', crashAt: 'none' },
+  headline: 'Three services must commit together, or not at all.',
+  defaults: { stock: 'in', crashAt: 'afterDecision' },
   options: [
     {
       key: 'crashAt',
@@ -291,6 +292,19 @@ export const twoPhase: ScenarioDef = {
     return {
       sim,
       view: 'sequence',
+      layout: {
+        nodes: {
+          [COORD]: { x: 500, y: 100, icon: 'hub', big: 'decision' },
+          [BANK]: { x: 175, y: 460, icon: 'bank', big: 'state' },
+          [MERCHANT]: { x: 500, y: 460, icon: 'box', big: 'state' },
+          [LEDGER]: { x: 825, y: 460, icon: 'ledger', big: 'state' },
+        },
+        links: [
+          [COORD, BANK],
+          [COORD, MERCHANT],
+          [COORD, LEDGER],
+        ],
+      },
       canCutNetwork: true,
       startLabel: `Pay ${inr(AMOUNT)}`,
       started: () => began,

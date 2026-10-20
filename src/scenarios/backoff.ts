@@ -134,7 +134,7 @@ function build(strategy: Strategy): World {
       const wasted = s.rejected + s.refused
       return {
         tone: wasted > CLIENTS * 1.5 ? 'warn' : 'good',
-        title: `Done in ${fmtTime(s.doneAt ?? 0)}`,
+        title: `Done in ${fmtTime(s.doneAt ?? 0)}, ${wasted} wasted`,
         detail: `${s.total} requests for ${CLIENTS} payments, ${wasted} wasted.`,
       }
     },
@@ -169,6 +169,7 @@ export const backoff: ScenarioDef = {
   id: 'backoff',
   tab: 'Retries',
   title: 'Retry storms and exponential backoff',
+  headline: 'Twenty customers retry at once after an outage.',
   defaults: { strategy: 'fixed' },
   options: [
     {

@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { LoadView } from './components/LoadView'
-import { Sequence } from './components/Sequence'
-import { PauseIcon, PlayIcon, ResetIcon } from './components/icons'
-import { Checkout, ConceptCard, LogPanel, OutcomeCard, Options, TimeReadout } from './components/panels'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { Controls } from './components/Controls'
+import { Crowd } from './components/Crowd'
+import { Drawer } from './components/Drawer'
+import { Chart, Legend } from './components/LoadView'
+import { OutcomeBanner } from './components/OutcomeBanner'
+import { Phone } from './components/Phone'
+import { Stage } from './components/Stage'
+import { ChevronIcon } from './components/icons'
 import { SCENARIOS } from './scenarios'
 import type { Opts, World } from './scenarios/types'
-
-const SPEEDS = [0.5, 1, 2, 4]
 
 function useWorldClock(world: World) {
   useEffect(() => {
@@ -23,63 +25,11 @@ function useWorldClock(world: World) {
   useSyncExternalStore(world.sim.subscribe, world.sim.getVersion)
 }
 
-function Toolbar({ world, onReset }: { world: World; onReset: () => void }) {
-  const sim = world.sim
-  return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-panel px-3 py-2">
-      {world.canCutNetwork && (
-        <button
-          onClick={() => sim.setNet(!sim.netUp)}
-          aria-pressed={!sim.netUp}
-          className={`h-8 rounded-md border px-3 text-[13px] font-medium transition-colors ${
-            sim.netUp ? 'border-line-strong hover:border-bad hover:text-bad' : 'border-bad bg-bad text-white'
-          }`}
-        >
-          {sim.netUp ? 'Cut network' : 'Restore network'}
-        </button>
-      )}
-      <button
-        onClick={() => {
-          sim.paused = !sim.paused
-          sim.touch()
-        }}
-        className="flex h-8 items-center gap-1.5 rounded-md border border-line-strong px-3 text-[13px] font-medium hover:bg-canvas"
-      >
-        {sim.paused ? <PlayIcon /> : <PauseIcon />}
-        {sim.paused ? 'Resume' : 'Pause'}
-      </button>
-      <div className="flex rounded-md bg-canvas p-0.5" role="group" aria-label="Simulation speed">
-        {SPEEDS.map((s) => (
-          <button
-            key={s}
-            onClick={() => {
-              sim.speed = s
-              sim.touch()
-            }}
-            aria-pressed={sim.speed === s}
-            className={`rounded px-2 py-1 font-mono text-xs transition-colors ${
-              sim.speed === s ? 'bg-panel text-ink shadow-[0_0_0_1px_var(--color-line-strong)]' : 'text-muted hover:text-ink'
-            }`}
-          >
-            {s}x
-          </button>
-        ))}
-      </div>
-      <div className="ml-auto flex items-center gap-3">
-        <TimeReadout t={sim.t} />
-        <button onClick={onReset} className="flex h-8 items-center gap-1.5 rounded-md border border-line-strong px-3 text-[13px] font-medium hover:bg-canvas">
-          <ResetIcon />
-          Reset
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
   const [tab, setTab] = useState(() => (import.meta.env.DEV ? Number(new URLSearchParams(location.search).get('tab') ?? 0) : 0))
   const [optsById, setOptsById] = useState<Record<string, Opts>>(() => Object.fromEntries(SCENARIOS.map((s) => [s.id, s.defaults])))
   const [run, setRun] = useState(0)
+  const [drawer, setDrawer] = useState(false)
 
   const scenario = SCENARIOS[tab]
   const opts = optsById[scenario.id]
@@ -95,50 +45,85 @@ export default function App() {
     }
   }, [world])
 
+  const go = useCallback((d: number) => setTab((t) => Math.min(SCENARIOS.length - 1, Math.max(0, t + d))), [])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') go(1)
+      if (e.key === 'ArrowLeft') go(-1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go])
+
   const setOpt = (key: string, v: boolean | string) => setOptsById((m) => ({ ...m, [scenario.id]: { ...m[scenario.id], [key]: v } }))
+  const outcome = world.outcome()
 
   return (
-    <div className="flex min-h-full flex-col lg:h-full">
-      <header className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-line bg-panel px-5 py-2.5">
-        <div>
-          <h1 className="text-[15px] leading-tight font-semibold">Payment reliability lab</h1>
-          <p className="text-xs text-muted">Distributed Computing Systems, FA2 case study 7</p>
-        </div>
-        <nav className="flex flex-wrap gap-1" aria-label="Scenarios">
-          {SCENARIOS.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => setTab(i)}
-              aria-current={i === tab}
-              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                i === tab ? 'bg-ink text-white' : 'text-muted hover:bg-canvas hover:text-ink'
-              }`}
-            >
-              <span className="mr-1.5 font-mono text-[11px] opacity-60">{i + 1}</span>
-              {s.tab}
-            </button>
-          ))}
+    <div className="flex h-full min-h-[600px] flex-col gap-3 px-6 pt-3 pb-4">
+      <header className="flex items-center gap-6">
+        <div className="text-[13px] font-semibold tracking-tight">Payment reliability lab</div>
+        <nav className="mx-auto flex items-center gap-3" aria-label="Scenarios">
+          <button
+            onClick={() => go(-1)}
+            disabled={tab === 0}
+            aria-label="Previous scenario"
+            className="grid size-8 place-items-center rounded-full border border-line-strong bg-panel hover:bg-canvas disabled:opacity-30"
+          >
+            <ChevronIcon dir="left" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            {SCENARIOS.map((s, i) => (
+              <button
+                key={s.id}
+                onClick={() => setTab(i)}
+                aria-label={s.tab}
+                aria-current={i === tab}
+                className={`h-2.5 rounded-full transition-all ${i === tab ? 'w-8 bg-ink' : 'w-2.5 bg-line-strong hover:bg-faint'}`}
+              />
+            ))}
+          </div>
+          <span className="w-40 text-[13px] font-medium">
+            <span className="font-mono text-muted">
+              {tab + 1}/{SCENARIOS.length}
+            </span>{' '}
+            {scenario.tab}
+          </span>
+          <button
+            onClick={() => go(1)}
+            disabled={tab === SCENARIOS.length - 1}
+            aria-label="Next scenario"
+            className="grid size-8 place-items-center rounded-full border border-line-strong bg-panel hover:bg-canvas disabled:opacity-30"
+          >
+            <ChevronIcon />
+          </button>
         </nav>
-        <p className="ml-auto hidden text-xs text-muted xl:block">{scenario.title}</p>
+        <button onClick={() => setDrawer(true)} className="h-8 rounded-lg border border-line-strong bg-panel px-3 text-[13px] font-medium hover:bg-canvas">
+          Details
+        </button>
       </header>
 
-      <main className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[272px_minmax(0,1fr)_316px]">
-        <div className="scroll-thin flex min-h-0 flex-col gap-3 overflow-y-auto">
-          <Checkout view={world.checkout()} label={world.startLabel} onPay={world.start} disabled={world.started()} />
-          <Options defs={scenario.options} values={opts} onChange={setOpt} />
-          <OutcomeCard outcome={world.outcome()} />
-        </div>
+      <h1 key={scenario.id} className="text-[clamp(22px,4vh,38px)] leading-tight font-semibold tracking-tight">
+        {scenario.headline}
+      </h1>
 
-        <div className="flex min-h-[520px] min-w-0 flex-col gap-3 lg:min-h-0">
-          <Toolbar world={world} onReset={() => setRun((r) => r + 1)} />
-          {world.view === 'sequence' ? <Sequence sim={world.sim} /> : <LoadView load={world.load!} strategy={String(opts.strategy)} />}
-        </div>
-
-        <div className="flex min-h-0 flex-col gap-3">
-          <ConceptCard concept={scenario.concept} />
-          <LogPanel world={world} />
+      <main className="flex min-h-0 flex-1 gap-5">
+        <div className="flex w-[30%] min-w-[220px] flex-col">{world.view === 'sequence' ? <Phone world={world} /> : <Crowd world={world} />}</div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          {world.view === 'sequence' ? (
+            <Stage world={world} />
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col justify-center rounded-2xl border border-line bg-panel p-4">
+              <Chart load={world.load!} />
+              <Legend />
+            </div>
+          )}
         </div>
       </main>
+
+      <OutcomeBanner outcome={outcome} />
+      <Controls world={world} defs={scenario.options} values={opts} onChange={setOpt} onReset={() => setRun((r) => r + 1)} />
+
+      <Drawer open={drawer} onClose={() => setDrawer(false)} scenario={scenario} world={world} outcome={outcome} strategy={String(opts.strategy)} />
     </div>
   )
 }

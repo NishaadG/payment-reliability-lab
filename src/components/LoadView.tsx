@@ -1,7 +1,6 @@
 import { fmtTime } from '../engine/sim'
 import { compareBackoff } from '../scenarios/backoff'
 import type { LoadData } from '../scenarios/types'
-import { Panel } from './panels'
 
 const CW = 720
 const CH = 250
@@ -9,7 +8,7 @@ const ML = 38
 const MB = 26
 const MT = 14
 
-function Chart({ load }: { load: LoadData }) {
+export function Chart({ load }: { load: LoadData }) {
   const windows = Math.max(14, load.buckets.length + 1)
   const peak = Math.max(20, ...load.buckets.map((b) => b.served + b.rejected + b.refused))
   const bw = (CW - ML - 8) / windows
@@ -65,17 +64,14 @@ function Chart({ load }: { load: LoadData }) {
           />
         )
       })}
-      <text x={ML + 6} y={CH - MB - 6} fontSize={10} className="halo font-mono" fill="var(--color-ink)">
-        API down
-      </text>
-      <text x={CW - 10} y={MT + 12} textAnchor="end" fontSize={10} className="font-mono" fill="var(--color-muted)">
+            <text x={CW - 10} y={MT + 12} textAnchor="end" fontSize={10} className="font-mono" fill="var(--color-muted)">
         bar = requests, tick = capacity this window
       </text>
     </svg>
   )
 }
 
-function Legend() {
+export function Legend() {
   const items = [
     ['var(--color-good)', 'served'],
     ['var(--color-bad)', 'rejected (over capacity)'],
@@ -93,66 +89,31 @@ function Legend() {
   )
 }
 
-export function LoadView({ load, strategy }: { load: LoadData; strategy: string }) {
+export function CompareTable({ strategy }: { strategy: string }) {
   const rows = compareBackoff()
   return (
-    <div className="scroll-thin min-h-0 flex-1 space-y-3 overflow-y-auto">
-      <Panel title="Requests reaching the API per window">
-        <div className="px-3 pt-3 pb-2">
-          <Chart load={load} />
-          <Legend />
-          <p className="mt-2 text-[11px] leading-snug text-faint">
-            Model: the API serves {load.capacity} requests per {load.windowMs} ms. A window that receives more than 12 leaves it degraded, so the next window serves only 1 (red tick).
-          </p>
-        </div>
-      </Panel>
-
-      <div className="grid gap-3 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <Panel title="Customers">
-          <div className="px-4 py-3">
-            <div className="grid grid-cols-10 gap-2">
-              {load.clients.map((c, i) => (
-                <span
-                  key={i}
-                  title={`customer ${i + 1}: ${c.state}, ${c.attempts} attempts`}
-                  className={`size-5 rounded-full border-2 transition-colors ${
-                    c.state === 'paid' ? 'border-good bg-good' : c.state === 'waiting' ? 'border-warn bg-warn-bg' : 'border-ink bg-ink'
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
-              <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-ink" />sending</span>
-              <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full border-2 border-warn bg-warn-bg" />waiting to retry</span>
-              <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-good" />paid</span>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel title="Same run, three strategies">
-          <table className="w-full text-left text-xs">
-            <thead className="text-[11px] text-faint">
-              <tr>
-                <th className="px-4 pt-2.5 pb-1 font-medium">Strategy</th>
-                <th className="px-2 pt-2.5 pb-1 text-right font-medium">Requests</th>
-                <th className="px-2 pt-2.5 pb-1 text-right font-medium">Wasted</th>
-                <th className="px-4 pt-2.5 pb-1 text-right font-medium">Finished</th>
-              </tr>
-            </thead>
-            <tbody className="font-mono tabular-nums">
-              {rows.map((r) => (
-                <tr key={r.strategy} className={r.strategy === strategy ? 'bg-canvas' : ''}>
-                  <td className="px-4 py-1.5 font-sans font-medium">{r.label}</td>
-                  <td className="px-2 py-1.5 text-right">{r.total}</td>
-                  <td className="px-2 py-1.5 text-right text-bad">{r.wasted}</td>
-                  <td className="px-4 py-1.5 text-right">{fmtTime(r.doneAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="px-4 pt-1 pb-3 text-[11px] leading-snug text-faint">Computed up front from the same random seed, so the rows are directly comparable.</p>
-        </Panel>
-      </div>
+    <div>
+      <table className="w-full text-left text-xs">
+        <thead className="text-[11px] text-faint">
+          <tr>
+            <th className="py-1 font-medium">Strategy</th>
+            <th className="px-2 py-1 text-right font-medium">Requests</th>
+            <th className="px-2 py-1 text-right font-medium">Wasted</th>
+            <th className="py-1 text-right font-medium">Finished</th>
+          </tr>
+        </thead>
+        <tbody className="font-mono tabular-nums">
+          {rows.map((r) => (
+            <tr key={r.strategy} className={r.strategy === strategy ? 'bg-canvas' : ''}>
+              <td className="py-1.5 pl-2 font-sans font-medium">{r.label}</td>
+              <td className="px-2 py-1.5 text-right">{r.total}</td>
+              <td className="px-2 py-1.5 text-right text-bad">{r.wasted}</td>
+              <td className="py-1.5 pr-2 text-right">{fmtTime(r.doneAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-2 text-[11px] leading-snug text-faint">All three run on the same random seed, so the rows are directly comparable.</p>
     </div>
   )
 }
