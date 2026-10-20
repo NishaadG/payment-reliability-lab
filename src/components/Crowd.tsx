@@ -43,7 +43,7 @@ export function Crowd({ world }: { world: World }) {
       <button
         onClick={world.start}
         disabled={world.started()}
-        className="h-11 w-full max-w-60 rounded-xl bg-ink text-[14px] font-semibold text-white transition-colors hover:bg-black disabled:bg-line-strong disabled:text-muted"
+        className="nudge h-11 w-full max-w-60 rounded-xl bg-ink text-[14px] font-semibold text-white transition-colors hover:bg-black disabled:bg-line-strong disabled:text-muted"
       >
         {world.startLabel}
       </button>

@@ -77,7 +77,7 @@ export function Phone({ world }: { world: World }) {
           <button
             onClick={world.start}
             disabled={started}
-            className="h-11 w-full rounded-xl bg-ink text-[14px] font-semibold text-white transition-colors hover:bg-black disabled:bg-line-strong disabled:text-muted"
+            className="nudge h-11 w-full rounded-xl bg-ink text-[14px] font-semibold text-white transition-colors hover:bg-black disabled:bg-line-strong disabled:text-muted"
           >
             {world.startLabel}
           </button>

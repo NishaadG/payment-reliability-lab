@@ -109,6 +109,15 @@ function build(strategy: Strategy): World {
 
   return {
     sim,
+    say: () => {
+      if (!started) return { text: 'Tap Start. The payment API is down. 20 customers keep retrying, and how long they wait decides how fast everyone gets through.' }
+      const wasted = load.stats.rejected + load.stats.refused
+      if (paid === CLIENTS) return { text: `Finished. ${wasted} of ${load.stats.total} requests were wasted. Switch the strategy below and compare.` }
+      if (sim.t < OUTAGE_END) return { text: 'The API is down, so every request fails. Each customer waits a bit, then tries again.' }
+      if (strategy === 'fixed') return { text: 'Everyone retries at the same moment, so the recovering API is flooded and turns most of them away.' }
+      if (strategy === 'exp') return { text: 'Customers wait longer after every failure, but they still retry in sync with each other.' }
+      return { text: 'Each customer waits a random time, so the load spreads out and the API keeps up.' }
+    },
     view: 'load',
     canCutNetwork: false,
     startLabel: 'Start flash sale',

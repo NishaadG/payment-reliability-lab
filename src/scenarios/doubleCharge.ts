@@ -21,13 +21,13 @@ export const doubleCharge: ScenarioDef = {
     {
       key: 'idempotency',
       kind: 'toggle',
-      label: 'Idempotency key',
+      label: 'Duplicate protection (idempotency key)',
       hint: 'The client sends the same key on every retry. The bank remembers it and replays the stored result.',
     },
     {
       key: 'loseReply',
       kind: 'toggle',
-      label: 'Lose the bank reply',
+      label: 'Lose the bank\'s reply',
       hint: 'Drops the first response coming back from the bank. The debit has already happened.',
     },
   ],
@@ -160,6 +160,28 @@ export const doubleCharge: ScenarioDef = {
 
     return {
       sim,
+      say: () => {
+        const n = charges.length
+        if (status === 'idle') return { text: 'Tap Pay on the phone, then watch the servers on the right handle the payment.' }
+        if (n > 1) return { text: `The bank charged again. It cannot tell this is the same payment, so the customer is billed ${n} times.` }
+        if (status === 'success')
+          return {
+            text:
+              useKey && attempts > 1
+                ? 'The bank recognised the same key, so it did not charge again. It just repeated its answer. Paid once.'
+                : 'The reply arrived and the payment is confirmed. Charged once.',
+          }
+        if (status === 'failed')
+          return { text: n === 1 ? 'The phone gave up and showed an error, but the bank did take the money.' : 'The phone gave up. Nothing was charged.' }
+        if (attempts > 1)
+          return {
+            text: useKey
+              ? 'No answer, so the phone asks again, with the same key as before.'
+              : 'No answer, so the phone asks again. The bank has no way to know this is a repeat.',
+          }
+        if (n === 1 && opts.loseReply === true) return { text: 'The bank has taken the money, but its reply got lost on the way back. The phone is still waiting.' }
+        return { text: 'The phone sends the payment through the Payment API to the bank.' }
+      },
       view: 'sequence',
       layout: {
         nodes: {

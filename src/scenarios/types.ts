@@ -50,8 +50,16 @@ export interface Layout {
   links: [string, string][]
 }
 
+export interface Say {
+  /** plain-English sentence about what is happening right now */
+  text: string
+  /** optional one-click fix shown next to the sentence, e.g. restart a crashed node */
+  action?: { label: string; run: () => void }
+}
+
 export interface World {
   sim: Sim
+  say: () => Say
   view: 'sequence' | 'load'
   canCutNetwork: boolean
   startLabel: string

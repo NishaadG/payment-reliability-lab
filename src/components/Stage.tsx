@@ -163,7 +163,7 @@ export function Stage({ world }: { world: World }) {
             Network down
           </div>
         )}
-        <div className="absolute right-1 bottom-0 text-[11px] text-faint">Click a node to crash it</div>
+        <div className="absolute right-1 bottom-0 text-[11px] text-faint">Pills are messages. Click any server to crash it.</div>
       </div>
     </div>
   )

@@ -291,6 +291,27 @@ export const twoPhase: ScenarioDef = {
 
     return {
       sim,
+      say: () => {
+        if (!began) return { text: 'Tap Pay. Bank, orders and ledger must all agree first. A coordinator asks them, then announces one verdict.' }
+        const s = states()
+        const prepared = s.filter((x) => x === 'prepared').length
+        const d = decision()
+        const coordUp = sim.nodes.get(COORD)!.up
+        if (s.every((x) => x === 'committed')) return { text: 'All three committed together. The customer is charged and the order is placed.' }
+        if (s.some((x) => x === 'aborted') && !prepared)
+          return { text: outOfStock ? 'The order service said no, out of stock, so everything was cancelled. Nobody was charged.' : 'Everything was cancelled safely. Nobody was charged.' }
+        if (!coordUp)
+          return {
+            text: d
+              ? `The coordinator decided to ${d.toLowerCase()}, then crashed before telling anyone. The services are stuck waiting, records locked.`
+              : 'The coordinator crashed before deciding. The services already said yes, so they are stuck waiting, records locked.',
+            action: { label: 'Restart coordinator', run: () => sim.recover(COORD) },
+          }
+        if (d && prepared)
+          return { text: crashFired ? 'The coordinator is back. It reads its log, finds the decision and tells everyone.' : `The verdict is ${d.toLowerCase()}. The coordinator is telling each service.` }
+        if (prepared) return { text: 'The services answer yes and lock their records. Now they wait for the verdict.' }
+        return { text: 'The coordinator asks each service: can you do this?' }
+      },
       view: 'sequence',
       layout: {
         nodes: {

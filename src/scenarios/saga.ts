@@ -256,6 +256,26 @@ export const saga: ScenarioDef = {
 
     return {
       sim,
+      say: () => {
+        if (!began) return { text: 'Tap Pay. The order has three steps: reserve stock, charge the card, book a courier.' }
+        if (has('DONE')) return { text: 'All three steps worked. Order confirmed.' }
+        if (has('ABORTED')) return { text: 'Every step that happened was undone. Stock is back and the card is refunded.' }
+        if (!sim.nodes.get(ORCH)!.up)
+          return {
+            text: 'The orchestrator crashed. Each service already saved its own work, and the orchestrator can resume from its log.',
+            action: { label: 'Restart orchestrator', run: () => sim.recover(ORCH) },
+          }
+        const bad = olog.find((e) => /^S\d:(fail|unknown)$/.test(e))
+        if (bad) {
+          const what = ['', 'Reserving the stock', 'Charging the card', 'Booking the courier'][Number(bad[1])]
+          return { text: `${what} failed. Now undoing the earlier steps, newest first.` }
+        }
+        const k = current?.k
+        if (k === 1) return { text: 'Step 1 of 3: reserving the stock.' }
+        if (k === 2) return { text: 'Step 2 of 3: charging the card.' }
+        if (k === 3) return { text: 'Step 3 of 3: booking the courier. The card is already charged at this point.' }
+        return { text: 'Working through the steps one at a time.' }
+      },
       view: 'sequence',
       layout: {
         nodes: {

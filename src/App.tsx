@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Controls } from './components/Controls'
 import { Crowd } from './components/Crowd'
 import { Drawer } from './components/Drawer'
+import { Guide } from './components/Guide'
 import { Chart, Legend } from './components/LoadView'
 import { OutcomeBanner } from './components/OutcomeBanner'
 import { Phone } from './components/Phone'
@@ -36,6 +37,13 @@ export default function App() {
   const world = useMemo(() => scenario.create(opts), [scenario, opts, run])
   useWorldClock(world)
 
+  // changing an option or pressing restart replays the run straight away, so the effect of the change is visible
+  const replay = useRef(false)
+  useEffect(() => {
+    if (replay.current && !world.started()) world.start()
+    replay.current = false
+  }, [world])
+
   // dev-only: ?auto=1&ff=<ms> starts the run and fast-forwards it, handy for screenshots
   useEffect(() => {
     const q = new URLSearchParams(location.search)
@@ -55,7 +63,10 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
-  const setOpt = (key: string, v: boolean | string) => setOptsById((m) => ({ ...m, [scenario.id]: { ...m[scenario.id], [key]: v } }))
+  const setOpt = (key: string, v: boolean | string) => {
+    replay.current = world.started()
+    setOptsById((m) => ({ ...m, [scenario.id]: { ...m[scenario.id], [key]: v } }))
+  }
   const outcome = world.outcome()
 
   return (
@@ -106,6 +117,8 @@ export default function App() {
         {scenario.headline}
       </h1>
 
+      <Guide world={world} tone={outcome.tone} />
+
       <main className="flex min-h-0 flex-1 gap-5">
         <div className="flex w-[30%] min-w-[220px] flex-col">{world.view === 'sequence' ? <Phone world={world} /> : <Crowd world={world} />}</div>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -121,7 +134,10 @@ export default function App() {
       </main>
 
       <OutcomeBanner outcome={outcome} />
-      <Controls world={world} defs={scenario.options} values={opts} onChange={setOpt} onReset={() => setRun((r) => r + 1)} />
+      <Controls world={world} defs={scenario.options} values={opts} onChange={setOpt} onReset={() => {
+          replay.current = world.started()
+          setRun((r) => r + 1)
+        }} />
 
       <Drawer open={drawer} onClose={() => setDrawer(false)} scenario={scenario} world={world} outcome={outcome} strategy={String(opts.strategy)} />
     </div>

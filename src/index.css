@@ -78,3 +78,24 @@ button:disabled {
 .spin {
   animation: spin 0.9s linear infinite;
 }
+
+/* slow ring that says "press this next" */
+@keyframes nudge {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ink) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+.nudge:not(:disabled) {
+  animation: nudge 1.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nudge:not(:disabled) {
+    animation: none;
+  }
+}
