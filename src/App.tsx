@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Controls } from './components/Controls'
 import { Crowd } from './components/Crowd'
-import { Drawer } from './components/Drawer'
 import { Guide } from './components/Guide'
 import { Chart, Legend } from './components/LoadView'
 import { OutcomeBanner } from './components/OutcomeBanner'
@@ -30,7 +29,6 @@ export default function App() {
   const [tab, setTab] = useState(() => (import.meta.env.DEV ? Number(new URLSearchParams(location.search).get('tab') ?? 0) : 0))
   const [optsById, setOptsById] = useState<Record<string, Opts>>(() => Object.fromEntries(SCENARIOS.map((s) => [s.id, s.defaults])))
   const [run, setRun] = useState(0)
-  const [drawer, setDrawer] = useState(false)
 
   const scenario = SCENARIOS[tab]
   const opts = optsById[scenario.id]
@@ -108,9 +106,6 @@ export default function App() {
             <ChevronIcon />
           </button>
         </nav>
-        <button onClick={() => setDrawer(true)} className="h-8 rounded-lg border border-line-strong bg-panel px-3 text-[13px] font-medium hover:bg-canvas">
-          Details
-        </button>
       </header>
 
       <h1 key={scenario.id} className="text-[clamp(22px,4vh,38px)] leading-tight font-semibold tracking-tight">
@@ -134,12 +129,11 @@ export default function App() {
       </main>
 
       <OutcomeBanner outcome={outcome} />
-      <Controls world={world} defs={scenario.options} values={opts} onChange={setOpt} onReset={() => {
+      <Controls defs={scenario.options} values={opts} onChange={setOpt} onReset={() => {
           replay.current = world.started()
           setRun((r) => r + 1)
         }} />
 
-      <Drawer open={drawer} onClose={() => setDrawer(false)} scenario={scenario} world={world} outcome={outcome} strategy={String(opts.strategy)} />
     </div>
   )
 }

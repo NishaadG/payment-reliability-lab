@@ -29,12 +29,11 @@ export const saga: ScenarioDef = {
     {
       key: 'fail',
       kind: 'segment',
-      label: 'Inject a failure',
-      hint: 'The chosen step refuses to run. Earlier steps then have to be undone.',
+      label: 'What goes wrong?',
+      hint: 'The last step refuses to run, so the earlier steps have to be undone.',
       choices: [
-        { value: 'none', label: 'None' },
-        { value: 'ship', label: 'Shipping' },
-        { value: 'card', label: 'Card' },
+        { value: 'none', label: 'Nothing' },
+        { value: 'ship', label: 'Delivery fails' },
       ],
     },
   ],
@@ -145,7 +144,7 @@ export const saga: ScenarioDef = {
 
     sim.addNode({
       id: ORCH,
-      name: 'Orchestrator',
+      name: 'Manager',
       role: 'Saga coordinator',
       chips: () => [
         { label: 'log', value: olog.length ? olog[olog.length - 1] : 'empty' },
@@ -205,7 +204,7 @@ export const saga: ScenarioDef = {
     worker(
       STOCK,
       1,
-      'Inventory',
+      'Stock',
       'Local txn',
       () => {
         stock -= 1
@@ -222,7 +221,7 @@ export const saga: ScenarioDef = {
     worker(
       BANK,
       2,
-      'Payments',
+      'Card',
       'Local txn',
       () => {
         balance -= AMOUNT
@@ -239,7 +238,7 @@ export const saga: ScenarioDef = {
     worker(
       SHIP,
       3,
-      'Fulfilment',
+      'Delivery',
       'Local txn',
       () => {
         shipment = 'booked'
@@ -262,8 +261,8 @@ export const saga: ScenarioDef = {
         if (has('ABORTED')) return { text: 'Every step that happened was undone. Stock is back and the card is refunded.' }
         if (!sim.nodes.get(ORCH)!.up)
           return {
-            text: 'The orchestrator crashed. Each service already saved its own work, and the orchestrator can resume from its log.',
-            action: { label: 'Restart orchestrator', run: () => sim.recover(ORCH) },
+            text: 'The manager crashed. Each service already saved its own work, and the manager can resume from its log.',
+            action: { label: 'Restart manager', run: () => sim.recover(ORCH) },
           }
         const bad = olog.find((e) => /^S\d:(fail|unknown)$/.test(e))
         if (bad) {

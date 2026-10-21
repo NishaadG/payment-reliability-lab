@@ -21,7 +21,7 @@ const LABEL: Record<Strategy, string> = {
 
 function build(strategy: Strategy): World {
   const sim = new Sim(5)
-  sim.addNode({ id: 'api', name: 'Payment API', role: 'Rate limited', chips: () => [] })
+  sim.addNode({ id: 'api', name: 'Shop server', role: 'Rate limited', chips: () => [] })
 
   const load: LoadData = {
     clients: Array.from({ length: CLIENTS }, () => ({ state: 'trying' as const, attempts: 0 })),
@@ -184,12 +184,11 @@ export const backoff: ScenarioDef = {
     {
       key: 'strategy',
       kind: 'segment',
-      label: 'Retry strategy',
-      hint: 'How each client waits before sending the failed payment again.',
+      label: 'Retry style',
+      hint: 'Smart waiting is exponential backoff with jitter: wait longer each time, plus a random bit.',
       choices: [
-        { value: 'fixed', label: 'Fixed' },
-        { value: 'exp', label: 'Backoff' },
-        { value: 'jitter', label: 'Jitter' },
+        { value: 'fixed', label: 'All at once' },
+        { value: 'jitter', label: 'Smart waiting' },
       ],
     },
   ],

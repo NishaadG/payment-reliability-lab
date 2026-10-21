@@ -38,23 +38,11 @@ export const twoPhase: ScenarioDef = {
     {
       key: 'crashAt',
       kind: 'segment',
-      label: 'Crash the coordinator',
-      hint: 'Where the coordinator process dies. You can also crash or restart any node from its card.',
+      label: 'What if the manager crashes?',
+      hint: 'The coordinator dies right after deciding, before telling anyone.',
       choices: [
-        { value: 'none', label: 'Never' },
-        { value: 'beforeDecision', label: 'Before decision' },
-        { value: 'afterDecision', label: 'After decision' },
-        { value: 'midCommit', label: 'Mid broadcast' },
-      ],
-    },
-    {
-      key: 'stock',
-      kind: 'segment',
-      label: 'Merchant stock',
-      hint: 'If the item is out of stock the merchant votes no and everything must roll back.',
-      choices: [
-        { value: 'in', label: 'In stock' },
-        { value: 'out', label: 'Out of stock' },
+        { value: 'none', label: 'No, all fine' },
+        { value: 'afterDecision', label: 'Yes, it crashes' },
       ],
     },
   ],
@@ -198,7 +186,7 @@ export const twoPhase: ScenarioDef = {
 
     sim.addNode({
       id: COORD,
-      name: 'Coordinator',
+      name: 'Manager',
       role: 'Payment service',
       chips: () => {
         const d = decision()
@@ -284,15 +272,15 @@ export const twoPhase: ScenarioDef = {
     }
 
     partNode(BANK, 'Bank', 'Holds the funds', () => [{ label: 'balance', value: inr(balance), tone: balance < OPENING ? 'ok' : 'neutral' }])
-    partNode(MERCHANT, 'Order service', 'Reserves stock', () => [{ label: 'stock', value: String(stock) }])
-    partNode(LEDGER, 'Ledger', 'Audit trail', () => [{ label: 'entries', value: String(entries) }])
+    partNode(MERCHANT, 'Orders', 'Reserves stock', () => [{ label: 'stock', value: String(stock) }])
+    partNode(LEDGER, 'Records', 'Audit trail', () => [{ label: 'entries', value: String(entries) }])
 
     const states = () => PARTS.map((p) => parts[p].state)
 
     return {
       sim,
       say: () => {
-        if (!began) return { text: 'Tap Pay. Bank, orders and ledger must all agree first. A coordinator asks them, then announces one verdict.' }
+        if (!began) return { text: 'Tap Pay. The bank, orders and records must all agree first. A manager asks them, then announces one verdict.' }
         const s = states()
         const prepared = s.filter((x) => x === 'prepared').length
         const d = decision()
@@ -303,14 +291,14 @@ export const twoPhase: ScenarioDef = {
         if (!coordUp)
           return {
             text: d
-              ? `The coordinator decided to ${d.toLowerCase()}, then crashed before telling anyone. The services are stuck waiting, records locked.`
-              : 'The coordinator crashed before deciding. The services already said yes, so they are stuck waiting, records locked.',
-            action: { label: 'Restart coordinator', run: () => sim.recover(COORD) },
+              ? `The manager decided to ${d.toLowerCase()}, then crashed before telling anyone. The services are stuck waiting, records locked.`
+              : 'The manager crashed before deciding. The services already said yes, so they are stuck waiting, records locked.',
+            action: { label: 'Restart manager', run: () => sim.recover(COORD) },
           }
         if (d && prepared)
-          return { text: crashFired ? 'The coordinator is back. It reads its log, finds the decision and tells everyone.' : `The verdict is ${d.toLowerCase()}. The coordinator is telling each service.` }
+          return { text: crashFired ? 'The manager is back. It reads its log, finds the decision and tells everyone.' : `The verdict is ${d.toLowerCase()}. The manager is telling each service.` }
         if (prepared) return { text: 'The services answer yes and lock their records. Now they wait for the verdict.' }
-        return { text: 'The coordinator asks each service: can you do this?' }
+        return { text: 'The manager asks each service: can you do this?' }
       },
       view: 'sequence',
       layout: {

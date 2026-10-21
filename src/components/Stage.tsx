@@ -16,6 +16,28 @@ const COLOR = {
 }
 const UNDO = new Set(['RELEASE', 'REFUND', 'CANCEL'])
 
+/** everyday wording for the message pills */
+const FRIENDLY: Record<string, string> = {
+  'POST /charge': 'Pay',
+  DEBIT: 'Take money',
+  OK: 'Done',
+  FAIL: 'Failed',
+  'HTTP 200': 'Paid',
+  PREPARE: 'Ready?',
+  VOTE_YES: 'Yes',
+  VOTE_NO: 'No',
+  COMMIT: 'Do it',
+  ABORT: 'Cancel',
+  ACK: 'Got it',
+  WHAT_DECISION: 'What now?',
+  RESERVE: 'Reserve stock',
+  CHARGE: 'Charge card',
+  BOOK: 'Book delivery',
+  RELEASE: 'Free stock',
+  REFUND: 'Refund',
+  CANCEL: 'Cancel delivery',
+}
+
 const TONE_TEXT = {
   neutral: 'text-ink',
   ok: 'text-good',
@@ -64,7 +86,7 @@ function Pill({ p, layout, t }: { p: Packet; layout: Layout; t: number }) {
   const frac = lost ? Math.min(1, ((p.lostAt ?? t) - p.sentAt) / span) : Math.min(1, Math.max(0, (t - p.sentAt) / span))
   const x = g.x1 + (g.x2 - g.x1) * frac
   const y = g.y1 + (g.y2 - g.y1) * frac
-  const text = p.label + (p.sub ? ' + key' : '')
+  const text = (FRIENDLY[p.label] ?? p.label) + (p.sub ? ' + ID' : '')
   const w = text.length * 7.4 + 22 + (lost ? 16 : 0)
   const color = lost ? 'var(--color-bad)' : UNDO.has(p.label) ? 'var(--color-ink)' : COLOR[p.channel]
   const fade = lost ? Math.max(0, 1 - (t - (p.lostAt ?? t)) / 1600) : 1

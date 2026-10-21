@@ -21,14 +21,8 @@ export const doubleCharge: ScenarioDef = {
     {
       key: 'idempotency',
       kind: 'toggle',
-      label: 'Duplicate protection (idempotency key)',
-      hint: 'The client sends the same key on every retry. The bank remembers it and replays the stored result.',
-    },
-    {
-      key: 'loseReply',
-      kind: 'toggle',
-      label: 'Lose the bank\'s reply',
-      hint: 'Drops the first response coming back from the bank. The debit has already happened.',
+      label: 'Safe mode',
+      hint: 'Idempotency key: the phone sends the same ID on every retry, so the bank can spot a repeat.',
     },
   ],
   concept: {
@@ -80,7 +74,7 @@ export const doubleCharge: ScenarioDef = {
 
     sim.addNode({
       id: GATEWAY,
-      name: 'Payment API',
+      name: 'Shop server',
       role: 'Stateless gateway',
       chips: () => [{ label: 'forwarded', value: String(forwarded) }],
       onMessage: (p) => {
@@ -168,7 +162,7 @@ export const doubleCharge: ScenarioDef = {
           return {
             text:
               useKey && attempts > 1
-                ? 'The bank recognised the same key, so it did not charge again. It just repeated its answer. Paid once.'
+                ? 'The bank recognised the same ID, so it did not charge again. It just repeated its answer. Paid once.'
                 : 'The reply arrived and the payment is confirmed. Charged once.',
           }
         if (status === 'failed')
@@ -176,11 +170,11 @@ export const doubleCharge: ScenarioDef = {
         if (attempts > 1)
           return {
             text: useKey
-              ? 'No answer, so the phone asks again, with the same key as before.'
+              ? 'No answer, so the phone asks again, with the same ID as before.'
               : 'No answer, so the phone asks again. The bank has no way to know this is a repeat.',
           }
         if (n === 1 && opts.loseReply === true) return { text: 'The bank has taken the money, but its reply got lost on the way back. The phone is still waiting.' }
-        return { text: 'The phone sends the payment through the Payment API to the bank.' }
+        return { text: 'The phone sends the payment through the shop server to the bank.' }
       },
       view: 'sequence',
       layout: {
