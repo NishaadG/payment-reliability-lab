@@ -37,11 +37,19 @@ function Switch({ def, on, onChange }: { def: OptionDef; on: boolean; onChange: 
 }
 
 export function Controls({
+  step,
+  onStep,
+  onNext,
+  canNext,
   defs,
   values,
   onChange,
   onReset,
 }: {
+  step: boolean
+  onStep: (v: boolean) => void
+  onNext: () => void
+  canNext: boolean
   defs: OptionDef[]
   values: Opts
   onChange: (key: string, v: boolean | string) => void
@@ -55,6 +63,20 @@ export function Controls({
         ) : (
           <Segment key={d.key} def={d} value={String(values[d.key])} onChange={(v) => onChange(d.key, v)} />
         ),
+      )}
+      <Segment
+        def={{ key: 'play', kind: 'segment', label: 'How to play', choices: [{ value: 'auto', label: 'Auto' }, { value: 'step', label: 'Step by step' }] }}
+        value={step ? 'step' : 'auto'}
+        onChange={(v) => onStep(v === 'step')}
+      />
+      {step && (
+        <button
+          onClick={onNext}
+          disabled={!canNext}
+          className="nudge h-10 rounded-lg bg-ink px-5 text-[15px] font-semibold text-white hover:bg-black disabled:bg-line-strong disabled:text-muted"
+        >
+          Next step
+        </button>
       )}
       <button onClick={onReset} className="ml-auto flex h-10 items-center gap-2 rounded-lg border border-line-strong bg-panel px-4 text-[14px] font-semibold hover:bg-canvas">
         <ResetIcon />

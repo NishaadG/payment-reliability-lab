@@ -29,11 +29,17 @@ export default function App() {
   const [tab, setTab] = useState(() => (import.meta.env.DEV ? Number(new URLSearchParams(location.search).get('tab') ?? 0) : 0))
   const [optsById, setOptsById] = useState<Record<string, Opts>>(() => Object.fromEntries(SCENARIOS.map((s) => [s.id, s.defaults])))
   const [run, setRun] = useState(0)
+  const [step, setStep] = useState(false)
 
   const scenario = SCENARIOS[tab]
   const opts = optsById[scenario.id]
   const world = useMemo(() => scenario.create(opts), [scenario, opts, run])
   useWorldClock(world)
+
+  // step mode holds the clock until the presenter presses Next step
+  useEffect(() => {
+    world.sim.setStepMode(step)
+  }, [world, step])
 
   // changing an option or pressing restart replays the run straight away, so the effect of the change is visible
   const replay = useRef(false)
@@ -129,7 +135,7 @@ export default function App() {
       </main>
 
       <OutcomeBanner outcome={outcome} />
-      <Controls defs={scenario.options} values={opts} onChange={setOpt} onReset={() => {
+      <Controls step={step} onStep={setStep} onNext={() => world.sim.stepOnce()} canNext={world.started() && !world.sim.idle} defs={scenario.options} values={opts} onChange={setOpt} onReset={() => {
           replay.current = world.started()
           setRun((r) => r + 1)
         }} />

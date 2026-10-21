@@ -88,7 +88,7 @@ export class Sim {
   t = 0
   version = 0
   paused = false
-  speed = 1
+  speed = 0.45 // slow enough to follow on a projector
   netUp = true
   baseLatency = 350
 
@@ -101,6 +101,7 @@ export class Sim {
   bands: Band[] = []
 
   private queue: Ev[] = []
+  private stopAt = Infinity
   private seq = 0
   private ids = 0
   private drops: { id: number; match: (p: Packet) => boolean }[] = []
@@ -165,10 +166,32 @@ export class Sim {
   tick(dtMs: number): boolean {
     if (this.paused || this.queue.length === 0) return false
     const target = this.t + dtMs * this.speed
-    while (this.queue.length && this.queue[0].at <= target) this.runNext()
+    while (this.queue.length && this.queue[0].at <= target) {
+      this.runNext()
+      if (this.logs.length >= this.stopAt) {
+        this.stopAt = Infinity
+        this.paused = true
+        this.touch()
+        return true
+      }
+    }
     if (this.queue.length) this.t = target
     this.touch()
     return true
+  }
+
+  /** Step mode: hold the clock until the presenter asks for the next step. */
+  setStepMode(on: boolean) {
+    this.paused = on
+    this.stopAt = Infinity
+    this.touch()
+  }
+
+  /** Step mode: play on until the next thing worth narrating happens (a log entry), then hold again. */
+  stepOnce() {
+    this.stopAt = this.logs.length + 1
+    this.paused = false
+    this.touch()
   }
 
   runToEnd(limitMs = 120_000) {
